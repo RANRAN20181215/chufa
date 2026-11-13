@@ -1,0 +1,411 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>没有余数的除法 - 冉冉的数学乐园</title>
+<style>
+  :root {
+    --font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    --radius-container: 32px;
+    --shadow-container: 0 20px 60px rgba(0,0,0,0.15);
+    --padding-container: 40px;
+    --color-primary: #6c5ce7;
+    --color-accent: #00b894;
+    --color-highlight: #fdcb6e;
+    --color-dark: #2c3e50;
+    --color-muted: #999;
+    --gradient-bg: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--font-family);
+    background: var(--gradient-bg);
+    min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px;
+  }
+  .top-nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 20px;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    font-size: 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    flex-wrap: wrap;
+  }
+  .top-nav a { text-decoration: none; color: #666; padding: 4px 12px; border-radius: 8px; transition: all 0.2s; }
+  .top-nav a:hover { background: #f0f0f0; color: #333; }
+  .top-nav a.home { font-weight: bold; color: var(--color-primary); }
+  .top-nav a.current { background: #e8e0ff; color: var(--color-primary); font-weight: bold; }
+  .top-nav .sep { color: #ddd; font-size: 12px; }
+  .container { background: white; border-radius: var(--radius-container); padding: var(--padding-container); max-width: 800px; width: 100%; box-shadow: var(--shadow-container); }
+  h1 { text-align: center; color: var(--color-primary); font-size: 32px; margin-bottom: 4px; }
+  .subtitle { text-align: center; color: var(--color-muted); font-size: 15px; margin-bottom: 24px; }
+
+  .fact-display {
+    text-align: center; margin-bottom: 24px;
+    background: linear-gradient(135deg, #f0edff, #e8e0ff);
+    border-radius: 20px; padding: 20px;
+  }
+  .fact-display .equation {
+    font-size: 48px; font-weight: bold; color: var(--color-dark);
+    display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
+  }
+  .fact-display .equation .num-items { color: var(--color-primary); }
+  .fact-display .equation .num-group { color: var(--color-accent); }
+  .fact-display .equation .num-quotient { color: #e17055; }
+  .fact-display .desc { font-size: 18px; color: #666; margin-top: 8px; }
+
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-bottom: 24px;
+  }
+  .slider-group {
+    display: flex; align-items: center; gap: 12px;
+    background: #f8f9fa; padding: 10px 20px; border-radius: 16px;
+  }
+  .slider-group label { font-size: 18px; font-weight: bold; color: #666; }
+  .slider-group input[type=range] { width: 150px; accent-color: var(--color-primary); }
+  .slider-group .val { min-width: 40px; text-align: center; font-size: 24px; font-weight: bold; color: var(--color-primary); }
+
+  .items-area {
+    background: #fafafa; border-radius: 20px; padding: 20px;
+    border: 2px solid #eee; margin-bottom: 24px; min-height: 140px;
+  }
+  .groups-container { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
+  .group-box {
+    background: white; border-radius: 16px; padding: 12px;
+    border: 3px solid #00b894; min-width: 80px; text-align: center;
+  }
+  .group-box .group-label {
+    font-size: 13px; font-weight: bold; color: #00b894; margin-bottom: 6px;
+  }
+  .group-box .group-items { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+  .group-box .g-item {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: #e8f8f0; display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  .number-line-area {
+    margin-top: 16px; padding: 16px; background: #f8f9fa; border-radius: 16px;
+  }
+  .nl-canvas-wrap { width: 100%; height: 80px; position: relative; }
+  #nlCanvas { width: 100%; height: 80px; }
+
+  .inverse-area { margin-top: 24px; }
+  .inverse-area h3 { text-align: center; color: var(--color-primary); margin-bottom: 14px; font-size: 22px; }
+  .inv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .inv-grid { grid-template-columns: 1fr; } }
+  .inv-card { border-radius: 20px; padding: 18px 20px; border: 2px solid #eee; background: #f8f9fa; }
+  .inv-card.mul { background: #f0fdf9; border-color: #b8e8d8; }
+  .inv-card.add { background: #fff9e6; border-color: #fde3a7; }
+  .inv-title { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    font-size: 17px; font-weight: bold; color: #4a5568; margin-bottom: 8px; }
+  .inv-title .tag-mini { font-size: 12px; font-weight: bold; color: #fff; border-radius: 8px; padding: 2px 8px; }
+  .inv-card.mul .tag-mini { background: #00b894; }
+  .inv-card.add .tag-mini { background: #e1a100; }
+  .eq-row { font-size: 24px; font-weight: bold; text-align: center; color: #2c3e50; padding: 5px 0; }
+  .eq-row .hint { font-size: 13px; color: #95a5a6; font-weight: normal; margin-left: 10px; }
+  .eq-row b { font-size: 27px; padding: 0 2px; }
+  .eq-row b.p { color: #6c5ce7; }
+  .eq-row b.g { color: #00b894; }
+  .eq-row b.o { color: #e17055; }
+  .eq-row b.r { color: #e74c3c; }
+  .eq-row b.bl { color: #0984e3; }
+  .mini-btn { padding: 5px 14px; border: 2px solid #fdcb6e; border-radius: 10px; background: #fff;
+    font-family: inherit; font-size: 14px; font-weight: bold; color: #d68910; cursor: pointer; transition: all 0.2s; }
+  .mini-btn:hover { background: #fff4d6; }
+  .inv-note { margin-top: 12px; text-align: center; font-size: 14px; color: #7f8c8d; line-height: 1.7; }
+
+  .quiz-area {
+    margin-top: 24px; padding: 20px; background: #fff9e6;
+    border-radius: 20px; border: 2px solid #fdcb6e; text-align: center;
+  }
+  .quiz-area h3 { color: #d68910; margin-bottom: 12px; }
+  .quiz-btn {
+    padding: 10px 24px; border: 3px solid #dfe6e9; border-radius: 14px;
+    background: white; font-size: 18px; font-weight: bold; cursor: pointer;
+    transition: all 0.2s; font-family: inherit; margin: 4px;
+  }
+  .quiz-btn:hover { border-color: #fdcb6e; }
+  .quiz-btn.correct { border-color: #27ae60; background: #e8f8f0; color: #27ae60; }
+  .quiz-btn.wrong { border-color: #e74c3c; background: #fce4ec; color: #e74c3c; }
+  .quiz-result { margin-top: 12px; font-size: 17px; font-weight: bold; min-height: 32px; line-height: 1.6; }
+  .tips { margin-top: 16px; text-align: center; color: #999; font-size: 14px; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>➗ 没有余数的除法</h1>
+  <p class="subtitle">平均分，正好分完 · 加法和减法互逆，乘法和除法也互逆</p>
+
+  <div class="fact-display">
+    <div class="equation">
+      <span class="num-items" id="totalDisplay">12</span>
+      <span>÷</span>
+      <span class="num-group" id="groupSizeDisplay">3</span>
+      <span>=</span>
+      <span class="num-quotient" id="groupsDisplay">4</span>
+    </div>
+    <div class="desc" id="descText">12 个物品，每 3 个一组，正好分成 4 组。</div>
+  </div>
+
+  <div class="controls">
+    <div class="slider-group">
+      <label>每组几个</label>
+      <input type="range" id="groupSizeSlider" min="2" max="8" value="3">
+      <span class="val" id="groupSizeVal">3</span>
+    </div>
+    <div class="slider-group">
+      <label>分成几组</label>
+      <input type="range" id="groupsSlider" min="2" max="6" value="4">
+      <span class="val" id="groupsVal">4</span>
+    </div>
+  </div>
+
+  <div class="items-area" id="itemsArea"></div>
+
+  <div class="number-line-area">
+    <div class="nl-canvas-wrap">
+      <canvas id="nlCanvas"></canvas>
+    </div>
+  </div>
+
+  <div class="inverse-area">
+    <h3>🔁 互逆大发现</h3>
+    <div class="inv-grid">
+      <div class="inv-card mul">
+        <div class="inv-title"><span>乘法 ↔ 除法</span><span class="tag-mini">互为逆运算</span></div>
+        <div id="mulFamily"></div>
+      </div>
+      <div class="inv-card add">
+        <div class="inv-title"><span>加法 ↔ 减法</span><button class="mini-btn" id="addShuffle">换一组</button></div>
+        <div id="addFamily"></div>
+      </div>
+    </div>
+    <p class="inv-note">一个乘法算式，能变出两个除法算式；<br>一个加法算式，也能变出两个减法算式。</p>
+  </div>
+
+  <div class="quiz-area">
+    <h3>🤔 算一算</h3>
+    <div id="quizDisplay" style="font-size:28px; font-weight:bold; color:#2c3e50; margin:12px 0; line-height:1.6;"></div>
+    <div id="quizOptions"></div>
+    <div class="quiz-result" id="quizResult"></div>
+  </div>
+
+  <div class="tips">💡 拖动滑块：每份几个 × 几份 = 总数；反过来，总数 ÷ 每份几个 = 几份。<br>它们说的都是同一件事！</div>
+</div>
+
+<script>
+  const emojis = ['🍎','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍑','🍒','🥝','🍍','🥭','🍈','🍏','🍐','🥑','🌽','🥕','🥦','🍄','🥜','🌰','🍞','🧀','🥚','🍳','🥞','🧇','🍩','🍪'];
+  function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+  function getEmoji(i) { return emojis[i % emojis.length]; }
+  function rnd(n) { return Math.floor(Math.random() * n); }
+
+  let groupSize = 3, groups = 4;
+
+  function updateAll() {
+    const total = groupSize * groups;
+    document.getElementById('totalDisplay').textContent = total;
+    document.getElementById('groupSizeDisplay').textContent = groupSize;
+    document.getElementById('groupsDisplay').textContent = groups;
+    document.getElementById('groupSizeVal').textContent = groupSize;
+    document.getElementById('groupsVal').textContent = groups;
+    document.getElementById('descText').textContent =
+      `${total} 个物品，每 ${groupSize} 个一组，正好分成 ${groups} 组。`;
+    renderGroups();
+    renderNumberLine();
+    updateMulFamily();
+  }
+
+  function renderGroups() {
+    const area = document.getElementById('itemsArea');
+    area.innerHTML = '';
+    const container = document.createElement('div');
+    container.className = 'groups-container';
+    for (let g = 0; g < groups; g++) {
+      const box = document.createElement('div');
+      box.className = 'group-box';
+      const label = document.createElement('div');
+      label.className = 'group-label';
+      label.textContent = `第${g + 1}组`;
+      box.appendChild(label);
+      const itemsDiv = document.createElement('div');
+      itemsDiv.className = 'group-items';
+      for (let j = 0; j < groupSize; j++) {
+        const idx = g * groupSize + j;
+        const item = document.createElement('div');
+        item.className = 'g-item';
+        item.textContent = getEmoji(idx);
+        itemsDiv.appendChild(item);
+      }
+      box.appendChild(itemsDiv);
+      container.appendChild(box);
+    }
+    area.appendChild(container);
+  }
+
+  function renderNumberLine() {
+    const canvas = document.getElementById('nlCanvas');
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const w = Math.max(rect.width, 200); const h = 80;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+
+    const total = groupSize * groups;
+    const maxN = Math.max(total, 10);
+    const pad = 36; const lw = w - pad * 2; const step = lw / maxN; const y = 45;
+
+    ctx.clearRect(0, 0, w, h);
+
+    for (let g = 0; g < groups; g++) {
+      const x1 = pad + g * groupSize * step;
+      const x2 = pad + (g + 1) * groupSize * step;
+      ctx.fillStyle = `hsla(${140 + g * 38}, 65%, 52%, 0.16)`;
+      ctx.fillRect(x1, y - 7, x2 - x1, 14);
+      if (x2 - x1 > 36) {
+        ctx.fillStyle = '#7f8c8d';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('第' + (g + 1) + '组', (x1 + x2) / 2, y - 12);
+      }
+    }
+
+    ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(w - pad, y);
+    ctx.strokeStyle = '#bdc3c7'; ctx.lineWidth = 2; ctx.stroke();
+
+    for (let i = 0; i <= maxN; i++) {
+      const x = pad + i * step;
+      ctx.beginPath(); ctx.moveTo(x, y - 4); ctx.lineTo(x, y + 4);
+      const isGroupEnd = i > 0 && i % groupSize === 0 && i <= total;
+      ctx.strokeStyle = isGroupEnd ? '#00b894' : '#bdc3c7';
+      ctx.lineWidth = isGroupEnd ? 2.5 : 1;
+      ctx.stroke();
+      if (i % 5 === 0 || i === total) {
+        ctx.fillStyle = i === total ? '#6c5ce7' : '#2c3e50';
+        ctx.font = i === total ? 'bold 11px sans-serif' : '10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(i.toString(), x, y + 18);
+      }
+    }
+
+    ctx.fillStyle = '#6c5ce7';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('从 0 开始', pad, y + 32);
+  }
+
+  function updateMulFamily() {
+    const total = groupSize * groups;
+    document.getElementById('mulFamily').innerHTML =
+      `<div class="eq-row"><b class="g">${groupSize}</b> × <b class="o">${groups}</b> = <b class="p">${total}</b><span class="hint">每份 ${groupSize} 个 × ${groups} 份</span></div>` +
+      `<div class="eq-row"><b class="o">${groups}</b> × <b class="g">${groupSize}</b> = <b class="p">${total}</b><span class="hint">${groups} 份 × 每份 ${groupSize} 个</span></div>` +
+      `<div class="eq-row"><b class="p">${total}</b> ÷ <b class="g">${groupSize}</b> = <b class="o">${groups}</b><span class="hint">每 ${groupSize} 个一份</span></div>` +
+      `<div class="eq-row"><b class="p">${total}</b> ÷ <b class="o">${groups}</b> = <b class="g">${groupSize}</b><span class="hint">平均分 ${groups} 份</span></div>`;
+  }
+
+  let addA = 8, addB = 5;
+  function shuffleAdd() {
+    addA = 2 + rnd(9);
+    addB = 2 + rnd(9);
+    const c = addA + addB;
+    document.getElementById('addFamily').innerHTML =
+      `<div class="eq-row"><b class="bl">${addA}</b> + <b class="g">${addB}</b> = <b class="o">${c}</b><span class="hint">合起来</span></div>` +
+      `<div class="eq-row"><b class="o">${c}</b> - <b class="g">${addB}</b> = <b class="bl">${addA}</b><span class="hint">去掉一部分</span></div>` +
+      `<div class="eq-row"><b class="o">${c}</b> - <b class="bl">${addA}</b> = <b class="g">${addB}</b><span class="hint">去掉另一部分</span></div>`;
+  }
+
+  let quizId = 0;
+  function renderQuiz() {
+    quizId++;
+    const myId = quizId;
+    const type = rnd(4);
+    const gs = 2 + rnd(7);
+    const g = 2 + rnd(5);
+    const total = gs * g;
+    let text, ans, hint;
+
+    if (type === 0) {
+      text = `${total} ÷ ${gs} = ？`;
+      ans = g;
+      hint = `想乘法口诀：${gs} × ${g} = ${total}，所以 ${total} ÷ ${gs} = ${g}。`;
+    } else if (type === 1) {
+      text = `已知 ${gs} × ${g} = ${total}，那么 ${total} ÷ ${g} = ？`;
+      ans = gs;
+      hint = `乘法和除法互逆：${total} ÷ ${g} = ${gs}。`;
+    } else if (type === 2) {
+      text = `已知 ${total} ÷ ${g} = ${gs}，那么 ${gs} × ${g} = ？`;
+      ans = total;
+      hint = `除法倒过来就是乘法：${gs} × ${g} = ${total}。`;
+    } else {
+      const a = 2 + rnd(9), b = 2 + rnd(9), c = a + b;
+      text = `${a} + ${b} = ${c}，那么 ${c} - ${b} = ？`;
+      ans = a;
+      hint = `加法和减法互逆：${c} - ${b} = ${a}。`;
+    }
+
+    document.getElementById('quizDisplay').textContent = text;
+    document.getElementById('quizResult').textContent = '';
+
+    const options = document.getElementById('quizOptions');
+    options.innerHTML = '';
+
+    const pool = [];
+    for (let d = -3; d <= 4; d++) if (d !== 0 && ans + d > 0) pool.push(ans + d);
+    pool.sort(() => Math.random() - 0.5);
+    const answers = [ans];
+    for (const p of pool) { if (answers.length >= 4) break; if (!answers.includes(p)) answers.push(p); }
+    answers.sort(() => Math.random() - 0.5);
+
+    let answered = false;
+    answers.forEach(a => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-btn';
+      btn.textContent = a;
+      btn.addEventListener('click', () => {
+        if (answered) return; answered = true;
+        document.querySelectorAll('#quizOptions .quiz-btn').forEach(b => b.disabled = true);
+        const result = document.getElementById('quizResult');
+        if (a === ans) {
+          btn.classList.add('correct');
+          result.textContent = '✅ 答对了！' + hint;
+          result.style.color = '#27ae60';
+        } else {
+          btn.classList.add('wrong');
+          document.querySelectorAll('#quizOptions .quiz-btn').forEach(b => {
+            if (Number(b.textContent) === ans) b.classList.add('correct');
+          });
+          result.textContent = `❌ 正确答案是 ${ans}。` + hint;
+          result.style.color = '#e74c3c';
+        }
+        setTimeout(() => {
+          if (myId !== quizId) return;
+          renderQuiz();
+        }, 2600);
+      });
+      options.appendChild(btn);
+    });
+  }
+
+  document.getElementById('groupSizeSlider').addEventListener('input', function () {
+    groupSize = parseInt(this.value);
+    updateAll();
+  });
+  document.getElementById('groupsSlider').addEventListener('input', function () {
+    groups = parseInt(this.value);
+    updateAll();
+  });
+  document.getElementById('addShuffle').addEventListener('click', shuffleAdd);
+
+  window.addEventListener('resize', debounce(updateAll, 150));
+  updateAll();
+  shuffleAdd();
+  renderQuiz();
+</script>
+</body>
+</html>
